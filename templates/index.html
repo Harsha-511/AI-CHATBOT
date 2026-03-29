@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS AI Chat</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<!-- 🌊 WAVE BACKGROUND -->
+<div class="wave-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+    <div class="wave wave3"></div>
+</div>
+
+<div class="chat-app">
+    <header>
+        <h1>JARVIS AI ChatBot</h1>
+    </header>
+
+    <div id="chat-box" class="chat-box"></div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+const chatBox = document.getElementById("chat-box");
+const userInput = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+
+function addMessage(sender, message) {
+    const div = document.createElement("div");
+    div.classList.add("message", sender);
+
+    const msgText = document.createElement("p");
+    msgText.textContent = message;
+
+    div.appendChild(msgText);
+    chatBox.appendChild(div);
+
+    setTimeout(() => {
+        chatBox.scrollTo({
+            top: chatBox.scrollHeight,
+            behavior: "smooth"
+        });
+    }, 50);
+}
+
+function botTypingAnimation() {
+    const div = document.createElement("div");
+    div.classList.add("message", "bot");
+    div.id = "typing";
+
+    const dots = document.createElement("p");
+    dots.textContent = "JARVIS is typing...";
+
+    div.appendChild(dots);
+    chatBox.appendChild(div);
+
+    setTimeout(() => {
+        chatBox.scrollTo({
+            top: chatBox.scrollHeight,
+            behavior: "smooth"
+        });
+    }, 50);
+}
+
+sendBtn.addEventListener("click", async () => {
+    const msg = userInput.value.trim();
+    if (!msg) return;
+
+    addMessage("user", msg);
+    userInput.value = "";
+
+    botTypingAnimation();
+
+    try {
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+        });
+
+        const data = await response.json();
+
+        document.getElementById("typing")?.remove();
+
+        if (data.reply) {
+            addMessage("bot", data.reply);
+        } else {
+            addMessage("bot", "Error: " + data.error);
+        }
+
+    } catch (err) {
+        document.getElementById("typing")?.remove();
+        addMessage("bot", "Connection error!");
+    }
+});
+
+userInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendBtn.click();
+});
+</script>
+
+</body>
+</html>
